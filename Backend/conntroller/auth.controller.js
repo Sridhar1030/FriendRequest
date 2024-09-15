@@ -99,6 +99,7 @@ const loginUser = asyncHandler(async (req, res) => {
     // Generate access token and refresh token
     const { accessToken, refreshToken } =
         await generateAccessTokenAndRefreshToken(user._id);
+        console.log("refresh",refreshToken)
 
     // Remove sensitive fields before sending response
     const userData = user.toObject();
@@ -118,6 +119,7 @@ const loginUser = asyncHandler(async (req, res) => {
             message: "User logged in successfully",
             user: userData,
             accessToken,
+            refreshToken
         });
 });
 
