@@ -53,13 +53,10 @@ const respondToRequest = asyncHandler(async (req, res) => {
         return res.status(404).json({ message: "User or requester not found" });
     }
 
-
     if (!user.pendingRequests.includes(requesterId)) {
-        return res
-            .status(400)
-            .json({
-                message: "No pending friend request found ",
-            });
+        return res.status(400).json({
+            message: "No pending friend request found ",
+        });
     }
     // If action is 'accept', update both users' friends lists
     if (action === "accept") {
@@ -150,6 +147,57 @@ const getRecommendations = asyncHandler(async (req, res) => {
     res.status(200).json({ recommendations: combinedRecommendations });
 });
 
+const getAllRequests = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).populate({
+        path: "pendingRequests",
+        select: "username _id", // Select the fields you need
+    });
+
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user.pendingRequests);
+});
+
+const sentRequests = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).populate({
+        path: "friendRequestsSent",
+        select: "username _id", 
+    });
+    if(!user){
+        return res.status(404).json({message: "User not found"});
+    }
+    res.status(200).json(user.friendRequestsSent);
+})
+
+const cancelFriendRequest = asyncHandler(async (req, res) => {
+    const { recipientId } = req.body;
+    
+    // Find the logged-in user (who sent the request)
+    const user = await User.findById(req.user._id);
+    
+    // Find the recipient (who received the request)
+    const recipient = await User.findById(recipientId);
+    
+    if (!user || !recipient) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    // Remove the recipient from the user's sent requests
+    user.friendRequestsSent = user.friendRequestsSent.filter(id => id.toString() !== recipientId);
+
+    // Remove the user from the recipient's pending requests
+    recipient.pendingRequests = recipient.pendingRequests.filter(id => id.toString() !== req.user._id.toString());
+
+    // Save both users
+    await user.save();
+    await recipient.save();
+
+    res.status(200).json({ message: "Friend request canceled successfully" });
+});
+
+
 export {
     searchUsers,
     sendFriendRequest,
@@ -158,4 +206,7 @@ export {
     removeFriend,
     getRecommendations,
     updateUserInterests,
+    getAllRequests,
+    sentRequests,
+    cancelFriendRequest
 };
