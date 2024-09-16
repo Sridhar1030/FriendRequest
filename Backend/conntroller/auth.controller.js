@@ -23,7 +23,7 @@ const generateAccessTokenAndRefreshToken = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, password, username } = req.body;
+    const { fullName, email, password, username, interests } = req.body;
 
     // Check if all fields are provided
     if (
@@ -45,7 +45,13 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // Create the new user
-    const user = await User.create({ fullName, email, password, username });
+    const user = await User.create({
+        fullName,
+        email,
+        password,
+        username,
+        interests,
+    });
 
     if (!user) {
         res.status(400);
@@ -99,7 +105,7 @@ const loginUser = asyncHandler(async (req, res) => {
     // Generate access token and refresh token
     const { accessToken, refreshToken } =
         await generateAccessTokenAndRefreshToken(user._id);
-        console.log("refresh",refreshToken)
+    console.log("refresh", refreshToken);
 
     // Remove sensitive fields before sending response
     const userData = user.toObject();
@@ -119,10 +125,9 @@ const loginUser = asyncHandler(async (req, res) => {
             message: "User logged in successfully",
             user: userData,
             accessToken,
-            refreshToken
+            refreshToken,
         });
 });
-
 
 const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(

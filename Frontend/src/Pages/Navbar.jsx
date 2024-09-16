@@ -45,10 +45,10 @@ const Navbar = () => {
                         </li>
                         <li className="mb-4">
                             <Link
-                                to="/chat"
+                                to="/discover"
                                 className="block px-4 py-2 rounded-md hover:bg-gray-700"
                             >
-                                Chat
+                                Discover
                             </Link>
                         </li>
                         <li className="mb-4">

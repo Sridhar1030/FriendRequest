@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ReceivedRequests = () => {
     const [requests, setRequests] = useState([]);
@@ -52,6 +54,13 @@ const ReceivedRequests = () => {
                     },
                 }
             );
+            // Show success toast based on action
+            if (action === 'accept') {
+                toast.success('Friend request accepted!');
+            } else if (action === 'reject') {
+                toast.error('Friend request rejected.');
+            }
+
             // Refetch requests after handling
             const updatedRequests = await axios.get(`${import.meta.env.VITE_API_URL}/friends/requests`, {
                 headers: {
@@ -61,6 +70,7 @@ const ReceivedRequests = () => {
             setRequests(updatedRequests.data);
         } catch (error) {
             console.error("Error responding to friend request:", error);
+            toast.error('Failed to respond to friend request.');
         }
     };
 
@@ -99,6 +109,9 @@ const ReceivedRequests = () => {
                     <p>No received requests</p>
                 )}
             </div>
+
+            {/* Toast Container */}
+            <ToastContainer />
         </div>
     );
 };

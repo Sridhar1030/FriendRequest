@@ -10,6 +10,7 @@ import ReceivedRequests from './Pages/Requests/ReceivedRequests';
 
 import './App.css';
 import Sent from './Pages/Requests/Sent';
+import Discover from './Pages/Discover/Discover';
 
 function App() {
   return (
@@ -20,10 +21,12 @@ function App() {
         <div className="flex-1 ">
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/signUp" element={<Signup />} />
+            <Route path="/register" element={<Signup />} />
             <Route path="/" element={<ProtectedRoute element={<Home />} />} />
             <Route path="/requests" element={<ProtectedRoute element={<ReceivedRequests />} />} />
             <Route path = "/sent" element={<ProtectedRoute element={<Sent />} />} />
+            <Route path = "/discover" element={<ProtectedRoute element={<Discover />} />} />
+
           </Routes>
         </div>
       </div>

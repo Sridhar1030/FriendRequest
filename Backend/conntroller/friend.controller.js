@@ -115,7 +115,8 @@ const updateUserInterests = asyncHandler(async (req, res) => {
     res.status(200).json({ message: "Interests updated successfully" });
 });
 
-// Get friend recommendations based on mutual friends and interests
+// friend recommendations based on mutual friends and interests
+
 const getRecommendations = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id).populate("friends");
     if (!user) {
@@ -124,33 +125,35 @@ const getRecommendations = asyncHandler(async (req, res) => {
 
     const { friends, interests } = user;
 
-    // Find users with mutual friends (but exclude the current user's friends and the user themselves)
+
     const mutualFriendRecommendations = await User.find({
-        _id: { $ne: req.user._id }, // Exclude the current user
-        friends: { $in: friends }, // Look for users who share mutual friends
-        friends: { $ne: req.user._id }, // Exclude current friends
-    }).limit(10); // Limit the number of recommendations
+        _id: { $ne: req.user._id }, 
+        friends: { $in: friends },  
+        _id: { $nin: friends } 
+    }).limit(10); 
 
-    // Find users with mutual interests (but exclude the current user's friends and the user themselves)
     const mutualInterestRecommendations = await User.find({
-        _id: { $ne: req.user._id }, // Exclude the current user
-        interests: { $in: interests }, // Look for users with matching interests
-        friends: { $ne: req.user._id }, // Exclude current friends
-    }).limit(10); // Limit the number of recommendations
+        _id: { $ne: req.user._id }, 
+        interests: { $in: interests },  
+        _id: { $nin: friends } 
+    }).limit(10); 
 
-    // Combine both mutual friends and mutual interests recommendations
     const combinedRecommendations = [
         ...mutualFriendRecommendations,
         ...mutualInterestRecommendations,
     ];
 
-    res.status(200).json({ recommendations: combinedRecommendations });
+    // Deduplicate recommendations
+    const uniqueRecommendations = Array.from(new Set(combinedRecommendations.map(user => user._id)))
+        .map(id => combinedRecommendations.find(user => user._id.equals(id)));
+
+    res.status(200).json({ recommendations: uniqueRecommendations });
 });
 
 const getAllRequests = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id).populate({
         path: "pendingRequests",
-        select: "username _id", // Select the fields you need
+        select: "username _id", 
     });
 
     if (!user) {
@@ -163,40 +166,43 @@ const getAllRequests = asyncHandler(async (req, res) => {
 const sentRequests = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id).populate({
         path: "friendRequestsSent",
-        select: "username _id", 
+        select: "username _id",
     });
-    if(!user){
-        return res.status(404).json({message: "User not found"});
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
     }
     res.status(200).json(user.friendRequestsSent);
-})
+});
 
 const cancelFriendRequest = asyncHandler(async (req, res) => {
     const { recipientId } = req.body;
+
     
-    // Find the logged-in user (who sent the request)
     const user = await User.findById(req.user._id);
+
     
-    // Find the recipient (who received the request)
     const recipient = await User.findById(recipientId);
-    
+
     if (!user || !recipient) {
         return res.status(404).json({ message: "User not found" });
     }
 
-    // Remove the recipient from the user's sent requests
-    user.friendRequestsSent = user.friendRequestsSent.filter(id => id.toString() !== recipientId);
+    
+    user.friendRequestsSent = user.friendRequestsSent.filter(
+        (id) => id.toString() !== recipientId
+    );
 
-    // Remove the user from the recipient's pending requests
-    recipient.pendingRequests = recipient.pendingRequests.filter(id => id.toString() !== req.user._id.toString());
+    
+    recipient.pendingRequests = recipient.pendingRequests.filter(
+        (id) => id.toString() !== req.user._id.toString()
+    );
 
-    // Save both users
+    
     await user.save();
     await recipient.save();
 
     res.status(200).json({ message: "Friend request canceled successfully" });
 });
-
 
 export {
     searchUsers,
@@ -208,5 +214,5 @@ export {
     updateUserInterests,
     getAllRequests,
     sentRequests,
-    cancelFriendRequest
+    cancelFriendRequest,
 };
